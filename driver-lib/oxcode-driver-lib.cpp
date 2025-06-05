@@ -6,7 +6,7 @@ static int device{};
 
 bool init()
 {
-	device = open("/dev/oxcode", 0);
+	device = open("/dev/oxcode", O_RDWR);
 	if (device < 0) {
 		return false;
 	}
@@ -24,8 +24,8 @@ bool switch_signal(const uint signal_no)
 	{
 		return false;
 	}
-	const auto ret = write(device, std::to_string(signal_no).data(), 10);
-	return ret > 0;
+	const auto ret = write(device, std::to_string(signal_no).data(), 1);
+	return ret >= 0;
 }
 
 bool read_signal_values(int* out)
