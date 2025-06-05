@@ -6,7 +6,7 @@ import threading
 import time
 import os
 import ctypes
-from ctypes import c_int, c_bool, c_uint, POINTER
+from ctypes import c_int, c_bool, c_uint
 
 
 
@@ -19,12 +19,18 @@ class SignalApp:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         # Construye la ruta absoluta al archivo de la biblioteca
         lib_path = os.path.join(script_dir, "liboxcode.so")
-        self.lib = ctypes.CDLL(lib_path)
-        self.lib.switch_signal.argtypes = [c_uint]
-        self.lib.switch_signal.restype = c_bool
-        self.lib.read_signal_values.argtypes = []
-        self.lib.read_signal_values.restype = c_bool
+        try:
+            self.lib = ctypes.CDLL(lib_path)
+            self.lib.switch_signal.argtypes = [c_uint]
+            self.lib.switch_signal.restype = c_bool
+            self.lib.read_signal_values.restype = c_int
+            self.lib.init.restype = c_bool
+            self.lib.cleanup.restype = None
+        except Exception as e:
+            print(f"Error al cargar la biblioteca: {e}")
+            exit(1)
 
+        self.lib.init()
         self.root = root
         self.root.title("Visualización de Señales")
 
@@ -40,12 +46,6 @@ class SignalApp:
         self.running = True
         self.update_thread = threading.Thread(target=self.update_data_loop,daemon=True)
         self.update_thread.start()
-
-
-        # Firmas de las funciones
-        self.lib.init.restype = c_bool
-
-        self.lib.cleanup.restype = None
 
     def create_widgets(self):
         # Selector de señal
@@ -77,7 +77,7 @@ class SignalApp:
         signal = self.signal_choice.get()
 
         # Llamar al driver para cambiar la señal
-        result= self.lib.switch_signal(signal -1)
+        result = self.lib.switch_signal(signal -1)
 
         #print ("El driver devolvio:" +str(result))
 
@@ -89,9 +89,7 @@ class SignalApp:
 
     def leer_valor_de_cdd(self):
         #values = (c_int * 1)()  # Un array de 1 entero
-        success = self.lib.read_signal_values()
-        return success
-
+        return self.lib.read_signal_values()
 
     def update_data_loop(self):
         max_points = 100
