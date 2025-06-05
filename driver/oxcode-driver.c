@@ -87,7 +87,7 @@ static int __init oxcode_init(void)
         return ret;
     }
 
-    if (IS_ERR(cl = class_create(THIS_MODULE, CLASS_NAME)))
+    if (IS_ERR(cl = class_create(CLASS_NAME)))
     {
         unregister_chrdev_region(dev, 1);
         cdev_del(&c_dev);
