@@ -2,6 +2,8 @@
 #include <iostream>
 #include <unistd.h>
 
+extern "C"{
+
 static int device{};
 
 bool init()
@@ -35,4 +37,5 @@ int read_signal_values()
 	if (read(device, buffer, 1) <= 0)
 		return -1;
 	return buffer[0] - '0';
+}
 }
