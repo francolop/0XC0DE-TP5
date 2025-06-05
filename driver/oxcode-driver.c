@@ -25,18 +25,14 @@ static int my_close(struct inode *i, struct file *f)
 
 static ssize_t my_read(struct file *f, char __user *buf, size_t len, loff_t *off)
 {
-    char kbuf[256]; // o usa kmalloc para len grande
-    size_t to_copy = len > sizeof(kbuf) ? sizeof(kbuf) : len;
-    size_t i;
+    char kbuf[1];
 
-    for (i = 0; i < to_copy; ++i) {
-        kbuf[i] = curr_signal;
-    }
+    kbuf[0] = curr_signal;
 
-    if (copy_to_user(buf, kbuf, to_copy))
+    if (copy_to_user(buf, kbuf, 1))
         return -EINVAL;
 
-    return to_copy;
+    return 1;
 }
 
 static ssize_t my_write(struct file *f, const char __user *buf, size_t len, loff_t *off)

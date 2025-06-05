@@ -28,22 +28,18 @@ bool switch_signal(const uint signal_no)
 	return ret > 0;
 }
 
-bool read_signal_values(int* out, size_t len)
+bool read_signal_values(int* out)
 {
-	if (!out || len == 0)
+	if (!out)
 		return false;
 
-	char buffer[256];
-	if (len > sizeof(buffer))
-		len = sizeof(buffer);
+	char buffer[1];
 
-	const ssize_t ret = read(device, buffer, len);
+	const ssize_t ret = read(device, buffer, 1);
 	if (ret <= 0)
 		return false;
 
-	for (ssize_t i = 0; i < ret; ++i) {
-		out[i] = buffer[i] - '0';
-	}
+	out[0] = buffer[0] - '0';
 
 	return true;
 }
