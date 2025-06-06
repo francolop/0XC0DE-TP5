@@ -4,7 +4,7 @@
 
 extern "C"{
 
-static int device{};
+static int device = -1;
 
 bool init()
 {
@@ -17,21 +17,29 @@ bool init()
 
 void cleanup()
 {
-	close(device);
+	if (device >= 0)
+	{
+		close(device);
+	}
 }
 
 bool switch_signal(const uint signal_no)
 {
-	if (signal_no > 1)
+	if (device < 0  || signal_no > 1)
 	{
 		return false;
 	}
-	const auto ret = write(device, std::to_string(signal_no).data(), 1);
+	const std::string value = std::to_string(signal_no);
+	const auto ret = write(device, value.c_str(), 1);
 	return ret >= 0;
 }
 
 int read_signal_values()
 {
+	if (device < 0)
+	{
+		return false;
+	}
 	char buffer[1];
 
 	if (read(device, buffer, 1) <= 0)
