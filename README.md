@@ -141,6 +141,12 @@ Para podes acceder al dispositivo generamos una librería en C++ que acceda al a
    }
 ```
 
+Luego el script de Python simplemente accede a la librería para obtener nuevos valores de la señal cada 1 segundo y permite cambiar la señal que se observa con inputs de usuario.
+
+![](img/app.gif)
+
+Ahora podemos actualizar el driver para leer valores reales de I/O sin necesidad de actualizar el script de Python ni la librería en C++.
+
 ## Fuentes
 
 - [Manual pages](https://manpages.debian.org/testing/linux-manual-4.8/index.html)
