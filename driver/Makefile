@@ -1,8 +1,10 @@
-obj-m += oxcode-driver.o 
+obj-m := oxcode-driver.o
+KDIR := /lib/modules/$(shell uname -r)/build
+PWD := $(shell pwd)
+EXTRA_CFLAGS = -I$(KDIR)/include
 
 all:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+	$(MAKE) -C $(KDIR) M=$(PWD) EXTRA_CFLAGS="$(EXTRA_CFLAGS)" modules
 
 clean:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-
+	$(MAKE) -C $(KDIR) M=$(PWD) clean

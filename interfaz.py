@@ -79,7 +79,7 @@ class SignalApp:
         # Llamar al driver para cambiar la señal
         result = self.lib.switch_signal(signal -1)
 
-        #print ("El driver devolvio:" +str(result))
+        print("Se cambió la señal \n")
 
         # Resetear gráfico
         self.data.clear()
@@ -88,7 +88,6 @@ class SignalApp:
         self.update_title()
 
     def leer_valor_de_cdd(self):
-        #values = (c_int * 1)()  # Un array de 1 entero
         return self.lib.read_signal_values()
 
     def update_data_loop(self):
