@@ -40,7 +40,7 @@ static ssize_t my_read(struct file *f, char __user *buf, size_t len, loff_t *off
     } else {
         return -EINVAL;
     }
-
+    printk(KERN_INFO "valor: %d\n", value);
     kbuf[0] = value ? '1' : '0';
 
     if (copy_to_user(buf, kbuf, 1))
@@ -92,7 +92,7 @@ static int __init oxcode_init(void)
         goto fail_cdev;
     }
 
-    cl = class_create(THIS_MODULE, CLASS_NAME);
+    cl = class_create(CLASS_NAME);
     if (IS_ERR(cl)) {
         ret = PTR_ERR(cl);
         pr_err("0xC0DE: Failed to create device class\n");
@@ -106,19 +106,21 @@ static int __init oxcode_init(void)
         goto fail_device;
     }
 
-    gpio0_desc = gpiod_get_index(NULL, GPIO_0_LABEL, 0, GPIOD_IN);
-    if (IS_ERR(gpio0_desc)) {
+    gpio0_desc = gpio_to_desc(529);
+    if (!gpio0_desc) {
         ret = PTR_ERR(gpio0_desc);
         pr_err("0xC0DE: Failed to get GPIO 0 descriptor\n");
         goto fail_gpio0;
     }
+    gpiod_direction_input(gpio0_desc);
 
-    gpio1_desc = gpiod_get_index(NULL, GPIO_1_LABEL, 1, GPIOD_IN);
-    if (IS_ERR(gpio1_desc)) {
+    gpio1_desc = gpio_to_desc(539);
+    if (!gpio1_desc) {
         ret = PTR_ERR(gpio1_desc);
         pr_err("0xC0DE: Failed to get GPIO 1 descriptor\n");
         goto fail_gpio1;
     }
+    gpiod_direction_input(gpio1_desc);
 
     pr_info("0xC0DE: Module initialized successfully\n");
     return 0;
@@ -133,7 +135,7 @@ fail_class:
     cdev_del(&c_dev);
 fail_cdev:
     unregister_chrdev_region(dev, 1);
-    return ret;
+    return 1;
 }
 
 static void __exit oxcode_exit(void)
