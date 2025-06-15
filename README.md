@@ -160,6 +160,20 @@ Las primeras 2 funciones se utilizan en la conficutación de la función __init,
 
 ![App leyendo puertos de gpio](img/app2.gif)
 
+## Extra
+Durante el desarrollo de este driver para la lectura de pines GPIO en la raspberry PI, la mayor dificultad que experimentamos fue el constante fallo al intentar obtener descriptores válidos para los pines GPIO 17 y 27. 
+Utilizamos distintas interfaces que nos proporcionaban los modulos de linux, algunas como **gpio_request, gpiod_get, gpiod_get_index** todas estas maneras generaban un error al intentar insertar el módulo ya que decia que no encontraba un simbolo.
+
+Inicialmente, asumimos que los pines GPIO estaban asociados al modulo **gpiochip0** que viene por defecto en linux, sin embargo, después de multiples pruebas y lecturas del pin fallidas pensamos que el principal problema no era como estaba programado el driver sino como estaban mapeados los pines de GPIO en el kernel de linux.
+
+Al probar el método de **gpio_to_desc** este si se pudo cargar como módulo a la raspberry, sin embargo tampoco proporcionaba lectura. Al ejecutar el comando de **cat /sys/kernel/debug/gpio** observamos que el chip GPIO contenia pines que no comenzaban en 0, sino que estaba registrado como **gpiochip512**.
+
+Esto implicaba que los pines físicos como el GPIO17, GPIO27 no se encontraban en esa posición, sino que tenian que ser referenciados sumando el offset del chip: **512+17=529**. Al cambiar esto, el driver fue capaz de encontrar los descriptores necesarios y fue capaz de leer los pines correctamente.
+
+Con esto nos dimos cuenta que no solo importa saber como funciona la API de linux, sino también, como están mapeados en memoria.
+
+
+
 ## Fuentes
 
 - [Manual pages](https://manpages.debian.org/testing/linux-manual-4.8/index.html)
