@@ -173,6 +173,18 @@ Esto implicaba que los pines físicos como el GPIO17, GPIO27 no se encontraban e
 Con esto nos dimos cuenta que no solo importa saber como funciona la API de linux, sino también, como están mapeados en memoria.
 
 
+## Conclusión
+
+El desarrollo de este trabajo práctico nos permitió adentrarnos en el mundo de los drivers de dispositivos en Linux, un componente fundamental pero muchas veces invisible del sistema operativo. Al escribir un controlador desde cero y enfrentarnos a problemas reales como el mapeo incorrecto de los GPIOs, comprendimos que trabajar con drivers no se trata solamente de programar, sino también de entender cómo interactúan el hardware y el sistema operativo.
+
+Aprendimos a utilizar interfaces modernas como **gpiod**, a lidiar con errores de carga de módulos, y a interpretar herramientas del sistema como **/sys/kernel/debug/gpio**. Estos desafíos nos obligaron a investigar más allá del código y a tener en cuenta aspectos como la configuración del sistema y el diseño del kernel.
+
+En definitiva, este TP nos dejó como aprendizaje que desarrollar drivers implica trabajar a bajo nivel, donde cada detalle importa, y que una comprensión profunda del entorno de ejecución es tan importante como la implementación misma.
+
+
+
+
+
 
 ## Fuentes
 
