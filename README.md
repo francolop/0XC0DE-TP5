@@ -111,7 +111,7 @@ Por último debemos declarar nuestra función *__exit* para poder remover el mó
 
 Finalmente compilamos el código y cargamos el driver con *insmod*.
 
-## Acceso al dispositivo
+## Acceso al driver
 
 Para podes acceder al dispositivo generamos una librería en C++ que acceda al archivo en */dev*, por cuestiones de compatibilidad con la aplicación en Python debemos declarar las funciones como *extern "C"* pero podemos seguir haciendo uso de comodidades de C++ como los *std::string*. La librería además de leer y escribir sobre el archivo deberá realizar una traducción de los valores string retornados por read a un valor entero que la aplicación de usuario pueda graficar.
 
@@ -147,9 +147,23 @@ Luego el script de Python simplemente accede a la librería para obtener nuevos 
 
 Ahora podemos actualizar el driver para leer valores reales de I/O sin necesidad de actualizar el script de Python ni la librería en C++.
 
+## Driver con GPIO
+
+Para acceder a los puertos de gpio de la raspberry utiliamos el header *linux/gpio/consumer.h*, y específicamente las funciones:
+
+- gpio_to_desc(): Permite convertir de un número de puerto gpio legacy a un descriptor utilizado por las librerías modernas de gpio. En el caso de nuestra placa el puerto se representa como su número más 512 (Por ejemplo el puerto 17 se representa como 529).
+- gpiod_direction_input(): Permite setear un puerto de gpio como entrada.
+- gpiod_get_value(): Lee el valor de un puerto de gpio.
+- gpiod_put(): libera un puerto de gpio.
+
+Las primeras 2 funciones se utilizan en la conficutación de la función __init, la segunda en el read() y la tercera en __exit. Así logramos crear un driver que lee los valores de 2 puertos de gpio siendo totalmente compatible con la librería que escribimos inicialmente, por lo que para testear su funcionalidad solo hace falta cargar el nuevo driver y ejecutar el mismo script de python que usamos previamente.
+
+![App leyendo puertos de gpio](img/app2.gif)
+
 ## Fuentes
 
 - [Manual pages](https://manpages.debian.org/testing/linux-manual-4.8/index.html)
 - [Source code class.h](https://elixir.bootlin.com/linux/v6.14.3/source/include/linux/device/class.h#L226)
+- [Source code consumer.h](https://elixir.bootlin.com/linux/v6.13.7/source/include/linux/gpio/consumer.h)
 
 
