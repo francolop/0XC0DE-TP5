@@ -2,19 +2,18 @@
 #include <linux/cdev.h>
 #include <linux/fs.h>
 #include <linux/device.h>
-#include <linux/gpio/consumer.h>
+#include <linux/gpio.h>
 #include <linux/uaccess.h>
 
 #define DEVICE_NAME "oxcode"
 #define CLASS_NAME "oxcode_class"
-#define GPIO_0_LABEL "gpio17"
-#define GPIO_1_LABEL "gpio18"
+#define GPIO_0 17
+#define GPIO_1 27
 
 static dev_t dev;
 static struct cdev c_dev;
 static struct class *cl;
 static char curr_signal = '0';
-static struct gpio_desc *gpio0_desc, *gpio1_desc;
 
 static int my_open(struct inode *i, struct file *f)
 {
@@ -34,9 +33,9 @@ static ssize_t my_read(struct file *f, char __user *buf, size_t len, loff_t *off
     int value;
 
     if (curr_signal == '0') {
-        value = gpiod_get_value(gpio0_desc);
+        value = gpio_get_value(GPIO_0);
     } else if (curr_signal == '1') {
-        value = gpiod_get_value(gpio1_desc);
+        value = gpio_get_value(GPIO_1);
     } else {
         return -EINVAL;
     }
@@ -60,13 +59,15 @@ static ssize_t my_write(struct file *f, const char __user *buf, size_t len, loff
         return -EFAULT;
 
     if (kbuf != '0' && kbuf != '1')
+    {
         return -EINVAL;
-
+    }
     curr_signal = kbuf;
     return len;
 }
 
-static struct file_operations dev_fops = {
+static struct file_operations dev_fops =
+{
     .owner = THIS_MODULE,
     .open = my_open,
     .release = my_close,
@@ -78,13 +79,19 @@ static int __init oxcode_init(void)
 {
     int ret;
     dev_t dev_no;
+    int major;
     struct device *dev_ret;
 
-    if ((ret = alloc_chrdev_region(&dev_no, 0, 1, DEVICE_NAME))) {
+
+    if ((ret = alloc_chrdev_region(&dev_no, 0, 1, DEVICE_NAME)) < 0) {
         pr_err("0xC0DE: Failed to allocate major number\n");
         return ret;
     }
-    dev = MKDEV(MAJOR(dev_no), 0);
+
+    major = MAJOR(dev_no);
+    dev = MKDEV(major, 0);
+    pr_info("0xC0DE: Device allocated with major number %d\n", major);
+
 
     cdev_init(&c_dev, &dev_fops);
     if ((ret = cdev_add(&c_dev, dev, 1))) {
@@ -92,12 +99,14 @@ static int __init oxcode_init(void)
         goto fail_cdev;
     }
 
+
     cl = class_create(CLASS_NAME);
     if (IS_ERR(cl)) {
         ret = PTR_ERR(cl);
-        pr_err("0xC0DE: Failed to create device class\n");
+        pr_err("0xC0DE: Failed to register device class\n");
         goto fail_class;
     }
+
 
     dev_ret = device_create(cl, NULL, dev, NULL, DEVICE_NAME);
     if (IS_ERR(dev_ret)) {
@@ -106,25 +115,41 @@ static int __init oxcode_init(void)
         goto fail_device;
     }
 
-    gpio0_desc = gpio_to_desc(17);
-    if (IS_ERR(gpio0_desc)) {
-        ret = PTR_ERR(gpio0_desc);
-        pr_err("0xC0DE: Failed to get GPIO 0 descriptor\n");
+
+    if (gpio_request(GPIO_0, "gpio_0")) {
+        pr_err("0xC0DE: Failed to request GPIO_0\n");
+        ret = -EBUSY;
         goto fail_gpio0;
     }
 
-    gpio1_desc = gpio_to_desc(18);
-    if (IS_ERR(gpio1_desc)) {
-        ret = PTR_ERR(gpio1_desc);
-        pr_err("0xC0DE: Failed to get GPIO 1 descriptor\n");
+    if (gpio_direction_input(GPIO_0)) {
+        pr_err("0xC0DE: Failed to set GPIO_0 as input\n");
+        ret = -EINVAL;
+        goto fail_gpio0_dir;
+    }
+
+    if (gpio_request(GPIO_1, "gpio_1")) {
+        pr_err("0xC0DE: Failed to request GPIO_1\n");
+        ret = -EBUSY;
         goto fail_gpio1;
+    }
+
+    if (gpio_direction_input(GPIO_1)) {
+        pr_err("0xC0DE: Failed to set GPIO_1 as input\n");
+        ret = -EINVAL;
+        goto fail_gpio1_dir;
     }
 
     pr_info("0xC0DE: Module initialized successfully\n");
     return 0;
 
+
+fail_gpio1_dir:
+    gpio_free(GPIO_1);
 fail_gpio1:
-    gpiod_put(gpio0_desc);
+    gpio_free(GPIO_0);
+fail_gpio0_dir:
+    gpio_free(GPIO_0);
 fail_gpio0:
     device_destroy(cl, dev);
 fail_device:
@@ -138,12 +163,17 @@ fail_cdev:
 
 static void __exit oxcode_exit(void)
 {
-    gpiod_put(gpio0_desc);
-    gpiod_put(gpio1_desc);
+    gpio_free(GPIO_0);
+    gpio_free(GPIO_1);
+
     device_destroy(cl, dev);
+
     class_destroy(cl);
+
     cdev_del(&c_dev);
+
     unregister_chrdev_region(dev, 1);
+
     pr_info("0xC0DE: Module unloaded successfully\n");
 }
 
@@ -152,4 +182,4 @@ module_exit(oxcode_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Grupo 0XC0DE - Sistemas de computacion");
-MODULE_DESCRIPTION("Test");
+MODULE_DESCRIPTION("Driver para lectura de GPIO en Raspberry Pi");
